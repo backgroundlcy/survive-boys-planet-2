@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boys II Planet: Path to Debut</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Star, Users, Trophy, Heart, Zap, Music } = LucideReact;
+
+        const SurvivalShowGame = () => {
+          // Game state
+          const [playerName, setPlayerName] = useState('');
+          const [playerAvatar, setPlayerAvatar] = useState('😊');
+          const [gameStarted, setGameStarted] = useState(false);
+          const [currentScene, setCurrentScene] = useState('intro');
+          const [playerStats, setPlayerStats] = useState({
+            vocal: 50,
+            dance: 50,
+            visual: 50,
+            variety: 50,
+            leadership: 50,
+            popularity: 50
+          });
+          const [currentRank, setCurrentRank] = useState(45);
+          const [week, setWeek] = useState(1);
+          const [relationships, setRelationships] = useState({});
+          const [gameHistory, setGameHistory] = useState([]);
+
+          // Trainee list (you can replace with real names later)
+          const trainees = [
+            'Trainee A', 'Trainee B', 'Trainee C', 'Trainee D', 'Trainee E',
+            'Trainee F', 'Trainee G', 'Trainee H', 'Trainee I', 'Trainee J',
+            'Trainee K', 'Trainee L', 'Trainee M', 'Trainee N', 'Trainee O'
+          ];
+
+          const avatarOptions = ['😊', '😎', '🤗', '😋', '😇', '🥳', '😤', '🙂'];
+
+          // Game scenarios and paths
+          const scenarios = {
+            intro: {
+              title: "Welcome to Boys II Planet!",
+              description: `You've just arrived at the dorms with 60 other trainees. Everyone's nervous but excited. Your current rank is #${45}. What's your strategy for the first week?`,
+              choices: [
+                { text: "Focus on making friends and allies", action: () => handleChoice('social_path', { variety: 10, popularity: 15 }) },
+                { text: "Train intensively to improve skills", action: () => handleChoice('training_path', { vocal: 15, dance: 10 }) },
+                { text: "Study the competition quietly", action: () => handleChoice('strategic_path', { leadership: 10, visual: 5 }) },
+                { text: "Try to stand out with bold moves", action: () => handleChoice('bold_path', { variety: 20, popularity: -5 }) }
+              ]
+            },
+
+            social_path: {
+              title: "Making Connections",
+              description: `You decide to focus on building relationships. During lunch, you sit with Trainee A, Trainee F, and Trainee L. They seem friendly! Trainee A mentions they're worried about the vocal evaluation coming up.`,
+              choices: [
+                { text: "Offer to help Trainee A practice vocals", action: () => handleChoice('helper_path', { vocal: 5, popularity: 10 }) },
+                { text: "Suggest forming a practice group together", action: () => handleChoice('group_practice', { leadership: 10, popularity: 5 }) },
+                { text: "Share your own concerns to bond", action: () => handleChoice('vulnerable_path', { variety: 15, popularity: 5 }) },
+                { text: "Change the subject to something lighter", action: () => handleChoice('light_path', { variety: 10 }) }
+              ]
+            },
+
+            training_path: {
+              title: "Grinding in the Practice Room",
+              description: `You spend hours perfecting your vocals and dance. Trainee K notices your dedication and asks if you want to practice together. Some other trainees seem impressed but also a bit intimidated.`,
+              choices: [
+                { text: "Practice with Trainee K - teamwork!", action: () => handleChoice('partnership', { dance: 10, popularity: 5 }) },
+                { text: "Keep training solo to focus better", action: () => handleChoice('solo_grind', { vocal: 15, dance: 15, popularity: -5 }) },
+                { text: "Invite more trainees to join", action: () => handleChoice('group_training', { leadership: 15, popularity: 10 }) },
+                { text: "Take a break and socialize", action: () => handleChoice('balance_path', { variety: 10, popularity: 8 }) }
+              ]
+            },
+
+            strategic_path: {
+              title: "Observing the Competition",
+              description: `You carefully watch other trainees during practice. You notice Trainee B is incredibly talented but lacks confidence, while Trainee M is popular but struggling with vocals. Knowledge is power!`,
+              choices: [
+                { text: "Approach Trainee B to boost their confidence", action: () => handleChoice('mentor_path', { leadership: 15, popularity: 10 }) },
+                { text: "Offer to help Trainee M with vocals", action: () => handleChoice('teaching_path', { vocal: 5, leadership: 10 }) },
+                { text: "Keep your observations to yourself", action: () => handleChoice('secretive_path', { leadership: 10, popularity: -5 }) },
+                { text: "Share insights with your roommates", action: () => handleChoice('sharing_path', { variety: 10, popularity: 5 }) }
+              ]
+            },
+
+            bold_path: {
+              title: "Standing Out",
+              description: `You decide to make a memorable impression by volunteering first for everything and speaking up confidently. Some trainees admire your boldness, others think you're trying too hard. The trainers definitely notice you!`,
+              choices: [
+                { text: "Keep being bold and confident", action: () => handleChoice('confidence_path', { variety: 20, leadership: 10, popularity: -10 }) },
+                { text: "Tone it down a bit to fit in better", action: () => handleChoice('adjustment_path', { variety: 5, popularity: 15 }) },
+                { text: "Focus your boldness on performances only", action: () => handleChoice('performance_focus', { vocal: 10, dance: 10, visual: 10 }) },
+                { text: "Ask others if you're coming on too strong", action: () => handleChoice('self_reflection', { variety: 10, leadership: 5, popularity: 10 }) }
+              ]
+            },
+
+            helper_path: {
+              title: "The Mentor Role",
+              description: `Week 2: Your help with Trainee A paid off - they improved significantly! Word spreads that you're supportive. However, some trainees worry you might be too focused on others instead of yourself. Your rank moved to #${42}.`,
+              choices: [
+                { text: "Continue helping others - it's working!", action: () => handleChoice('full_mentor', { leadership: 20, popularity: 15, vocal: -5 }) },
+                { text: "Balance helping with self-improvement", action: () => handleChoice('balanced_mentor', { leadership: 10, vocal: 10, popularity: 10 }) },
+                { text: "Focus more on your own training now", action: () => handleChoice('self_focus', { vocal: 15, dance: 15 }) },
+                { text: "Form a study group to help everyone", action: () => handleChoice('group_leader', { leadership: 25, popularity: 20 }) }
+              ]
+            },
+
+            partnership: {
+              title: "Dynamic Duo",
+              description: `Week 3: You and Trainee K have become a powerful practice pair! Your chemistry is noticed by trainers and other contestants. There's talk of you two being centers for the next mission. Your rank is now #${37}!`,
+              choices: [
+                { text: "Suggest you both go for center together", action: () => handleChoice('dual_center', { leadership: 15, visual: 15, dance: 10 }) },
+                { text: "Support Trainee K for center while you sub-lead", action: () => handleChoice('supportive_partner', { leadership: 20, popularity: 15 }) },
+                { text: "Compete fairly for center position", action: () => handleChoice('fair_competition', { vocal: 15, dance: 15, visual: 10 }) },
+                { text: "Focus on being the best teammate possible", action: () => handleChoice('team_player', { variety: 15, popularity: 20 }) }
+              ]
+            },
+
+            group_leader: {
+              title: "Leading the Pack",
+              description: `Week 4: Your study group has become influential! Multiple trainees look to you for guidance. The trainers notice your leadership, but some higher-ranked trainees feel threatened. Drama is brewing...`,
+              choices: [
+                { text: "Address the tension directly and diplomatically", action: () => handleChoice('diplomat', { leadership: 25, variety: 15, popularity: 10 }) },
+                { text: "Focus on your group and ignore the drama", action: () => handleChoice('group_focus', { leadership: 15, popularity: 25 }) },
+                { text: "Try to include the threatened trainees", action: () => handleChoice('inclusive_leader', { leadership: 20, variety: 20, popularity: 5 }) },
+                { text: "Step back from leadership to avoid conflict", action: () => handleChoice('step_back', { popularity: 15, leadership: -10 }) }
+              ]
+            },
+
+            performance_focus: {
+              title: "Performance Beast",
+              description: `Week 5: Your stage presence has become legendary! Every performance you give gets massive reactions from both trainees and trainers. You're being called a 'stage genius' but some worry about your teamwork skills.`,
+              choices: [
+                { text: "Embrace the performance beast reputation", action: () => handleChoice('solo_star', { visual: 25, vocal: 20, popularity: -5 }) },
+                { text: "Show your collaborative side in group work", action: () => handleChoice('team_performer', { leadership: 15, variety: 15, popularity: 15 }) },
+                { text: "Mentor others in stage presence", action: () => handleChoice('performance_mentor', { leadership: 20, visual: 10, popularity: 10 }) },
+                { text: "Focus on consistency over flashiness", action: () => handleChoice('steady_performer', { vocal: 15, dance: 15, visual: 10 }) }
+              ]
+            },
+
+            diplomat: {
+              title: "The Peacemaker",
+              description: `Week 6: Your diplomatic approach worked! The tension dissolved and now even the previously threatened trainees respect you. You've become known as someone who can solve problems and bring people together.`,
+              choices: [
+                { text: "Use your influence to help struggling trainees", action: () => handleChoice('helper_leader', { leadership: 20, popularity: 25 }) },
+                { text: "Focus on perfecting your own skills now", action: () => handleChoice('skill_focus', { vocal: 20, dance: 20, visual: 15 }) },
+                { text: "Prepare for the inevitable final eliminations", action: () => handleChoice('strategic_prep', { leadership: 15, variety: 20, visual: 15 }) },
+                { text: "Build a strong alliance for the finale", action: () => handleChoice('alliance_builder', { leadership: 25, popularity: 20 }) }
+              ]
+            },
+
+            final_weeks: {
+              title: "The Final Push - Week 8",
+              description: `Only 20 trainees left! You're currently ranked #${Math.max(1, currentRank - 15)}. The final evaluation will determine the debut lineup. The pressure is intense. What's your final strategy?`,
+              choices: [
+                { text: "Give everything in a powerful solo performance", action: () => handleChoice('solo_finale', { vocal: 25, dance: 25, visual: 20 }) },
+                { text: "Collaborate with others for a group performance", action: () => handleChoice('group_finale', { variety: 20, leadership: 20, popularity: 15 }) },
+                { text: "Focus on showing your growth journey", action: () => handleChoice('growth_story', { variety: 25, visual: 15, popularity: 10 }) },
+                { text: "Play it safe with what you do best", action: () => handleChoice('safe_play', { vocal: 15, dance: 15, visual: 15 }) }
+              ]
+            }
+          };
+
+          const handleChoice = (nextScene, statChanges) => {
+            // Update stats
+            const newStats = { ...playerStats };
+            Object.keys(statChanges).forEach(stat => {
+              if (stat in newStats) {
+                newStats[stat] = Math.max(0, Math.min(100, newStats[stat] + statChanges[stat]));
+              }
+            });
+            setPlayerStats(newStats);
+
+            // Update rank based on overall improvement
+            const statSum = Object.values(newStats).reduce((sum, val) => sum + val, 0);
+            const rankChange = Math.floor((statSum - 300) / 20);
+            setCurrentRank(Math.max(1, Math.min(60, 45 - rankChange)));
+
+            // Add to history
+            setGameHistory([...gameHistory, { scene: currentScene, choice: statChanges }]);
+
+            // Progress game
+            if (week < 8) {
+              setWeek(week + 1);
+            }
+
+            // Determine next scene
+            if (week >= 7) {
+              setCurrentScene('final_weeks');
+            } else if (scenarios[nextScene]) {
+              setCurrentScene(nextScene);
+            } else {
+              // Generate random follow-up scene
+              const nextScenes = ['helper_path', 'partnership', 'group_leader', 'performance_focus', 'diplomat'];
+              setCurrentScene(nextScenes[Math.floor(Math.random() * nextScenes.length)]);
+            }
+          };
+
+          const getDebutResult = () => {
+            const finalScore = Object.values(playerStats).reduce((sum, val) => sum + val, 0) / 6;
+            const finalRank = currentRank;
+            
+            if (finalRank <= 8 && finalScore >= 65) {
+              return { success: true, rank: finalRank, message: "🎉 CONGRATULATIONS! You debuted in the final group!" };
+            } else if (finalRank <= 15) {
+              return { success: false, rank: finalRank, message: "So close! You were in the final 15 but didn't make debut. Great journey!" };
+            } else {
+              return { success: false, rank: finalRank, message: "You gave it your all! Not every story ends in debut, but you gained so much experience." };
+            }
+          };
+
+          const startGame = () => {
+            if (playerName.trim()) {
+              setGameStarted(true);
+            }
+          };
+
+          const resetGame = () => {
+            setGameStarted(false);
+            setCurrentScene('intro');
+            setPlayerStats({
+              vocal: 50,
+              dance: 50,
+              visual: 50,
+              variety: 50,
+              leadership: 50,
+              popularity: 50
+            });
+            setCurrentRank(45);
+            setWeek(1);
+            setGameHistory([]);
+          };
+
+          if (!gameStarted) {
+            return (
+              <div className="max-w-2xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen flex items-center justify-center">
+                <div className="bg-white rounded-xl shadow-lg p-8 w-full">
+                  <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+                    🌟 Boys II Planet: Path to Debut
+                  </h1>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Choose Your Trainee Name:</label>
+                      <input
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Enter your trainee name..."
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        maxLength={20}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Choose Your Avatar:</label>
+                      <div className="flex gap-2 flex-wrap justify-center">
+                        {avatarOptions.map(avatar => (
+                          <button
+                            key={avatar}
+                            onClick={() => setPlayerAvatar(avatar)}
+                            className={`text-2xl p-3 rounded-lg border-2 transition-colors ${
+                              playerAvatar === avatar 
+                                ? 'border-purple-500 bg-purple-100' 
+                                : 'border-gray-300 hover:border-purple-300'
+                            }`}
+                          >
+                            {avatar}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={startGame}
+                      disabled={!playerName.trim()}
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Start Your Journey to Debut! 🚀
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          const currentScenario = scenarios[currentScene];
+          const isGameEnd = week >= 8 && currentScene === 'final_weeks' && gameHistory.length > 8;
+
+          if (isGameEnd) {
+            const result = getDebutResult();
+            return (
+              <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+                <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                  <h1 className="text-3xl font-bold mb-4">Final Results!</h1>
+                  <div className="text-6xl mb-4">{playerAvatar}</div>
+                  <h2 className="text-2xl font-bold text-purple-600 mb-4">{playerName}</h2>
+                  
+                  <div className={`text-xl font-bold mb-6 p-4 rounded-lg ${
+                    result.success ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    Final Rank: #{result.rank}
+                    <br />
+                    {result.message}
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    {Object.entries(playerStats).map(([stat, value]) => (
+                      <div key={stat} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-sm text-gray-600 capitalize">{stat}</div>
+                        <div className="text-xl font-bold text-purple-600">{value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={resetGame}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3 rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition-colors"
+                  >
+                    Play Again 🔄
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Game Area */}
+                <div className="lg:col-span-2">
+                  <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h1 className="text-2xl font-bold text-purple-600">Week {week} - Boys II Planet</h1>
+                      <div className="text-lg font-bold">Rank #{currentRank}/60</div>
+                    </div>
+                    
+                    <div className="bg-purple-100 p-4 rounded-lg mb-6">
+                      <h2 className="text-xl font-bold mb-3">{currentScenario?.title}</h2>
+                      <p className="text-gray-700 leading-relaxed">{currentScenario?.description}</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {currentScenario?.choices.map((choice, index) => (
+                        <button
+                          key={index}
+                          onClick={choice.action}
+                          className="p-4 text-left border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
+                        >
+                          <span className="font-medium text-purple-600">Option {index + 1}:</span>
+                          <br />
+                          {choice.text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Player Stats & Info */}
+                <div className="space-y-6">
+                  {/* Player Card */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <div className="text-center mb-4">
+                      <div className="text-4xl mb-2">{playerAvatar}</div>
+                      <h3 className="text-xl font-bold text-purple-600">{playerName}</h3>
+                      <div className="text-gray-600">Rank #{currentRank}</div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="space-y-3">
+                      {Object.entries(playerStats).map(([stat, value]) => (
+                        <div key={stat}>
+                          <div className="flex justify-between text-sm">
+                            <span className="capitalize font-medium">{stat}</span>
+                            <span>{value}/100</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${value}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Current Trainees */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                      <Users className="text-purple-600" />
+                      Fellow Trainees
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      {trainees.slice(0, 12).map((trainee, index) => (
+                        <div key={trainee} className="bg-gray-100 p-2 rounded text-center">
+                          <div className="text-lg mb-1">🧑‍🎤</div>
+                          <div className="font-medium">{trainee}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Progress */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-lg font-bold mb-4">Journey Progress</h3>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Week {week} of 8</span>
+                      <span>{Math.round((week / 8) * 100)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300"
+                        style={{ width: `${(week / 8) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        // Render the app
+        ReactDOM.render(<SurvivalShowGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
